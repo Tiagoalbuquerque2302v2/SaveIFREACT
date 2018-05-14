@@ -7,7 +7,7 @@
 import React, { Component } from 'react';
 import {
     Grid, Row, Col,
-    FormGroup, ControlLabel, FormControl, Radio, Checkbox
+    FormGroup, ControlLabel, FormControl, Radio, Checkbox, HelpBlock
 } from 'react-bootstrap';
 
 import {Card} from '../../../components/Card/Card.jsx';
@@ -27,7 +27,12 @@ export default class CreateGroupElement extends React.Component {
                 group:this.props.group,
                 page2: false,             
                 //categoy:this.props.lista,
-                categoria: null
+                categoria: null,
+                errorGrupo: "",
+                msgErroGrupo:"",
+                category:"",
+                nomeBotao: "Próximo",
+                botao:""
             };
     }
         
@@ -71,9 +76,25 @@ export default class CreateGroupElement extends React.Component {
         */
         setCategory(valor) {
         
-        this.setState({
-           categoria: valor
-        });  
+        this.setState(
+                    (anterior)=>
+                            {
+                            anterior.categoria=valor;
+                            return anterior;
+                            }
+                    ); 
+        
+       }
+       
+       setBotao(valor) {
+        
+        this.setState(
+                    (anterior)=>
+                            {
+                            anterior.botao=valor;
+                            return anterior;
+                            }
+                    ); 
         
        }
         
@@ -89,27 +110,56 @@ export default class CreateGroupElement extends React.Component {
         }
    
         createGroup(){
-          
+            let regexNome = /^[a-zA-Z\u00C0-\u00FF ]+$/;
+            
             if (this.state.group.nome &&
-                this.state.group.descricao) {
+                this.state.group.descricao&&this.state.group.tipoPrivacidade) {
+            
+            this.setErrorGrupo("", "");
             if (this.state.group.id&&this.state.page2!=true) {  
                 this.setState({page2: true});
-                this.props.editar();   
+                //this.props.editar();   
             } else if (this.state.group.id&&this.state.page2==true){
                 this.setState({page2: false});
-                this.props.confirmar();
+                    this.props.alert();
+                    this.setBotao("none");
+                    this.props.confirmar(); 
             } else {
                 this.setState({page2: true});
-                this.props.inserir(this.state.group, this.state.categoria);              
+                if(regexNome.test(this.state.group.nome)){
+                this.props.inserir(this.state.group, this.state.categoria);
+                this.setNomeBotao("Criar grupo");
+                this.setErrorGrupo("", "");
+                }else this.setErrorGrupo("error", "Não é permitido caracteres especiais!");
             }
         } else {
-            alert("Preencha todos os campos!");
+            this.setErrorGrupo("error", "Preencha todos os campos obrigatórios!");
         }
         
     }
+    
+    setErrorGrupo (estilo, msg){
+            this.setState({
+                errorGrupo: estilo,
+                msgErroGrupo: msg
+            });
+        }
+        
+    setNomeBotao (nome){
+            this.setState({
+                nomeBotao: nome
+            });
+        }
             
     render () {
         
+        let erroGrupo=null;
+
+        if (this.state.errorGrupo==="error"){
+            
+            erroGrupo=<HelpBlock>{this.state.msgErroGrupo}</HelpBlock>
+            
+        }else erroGrupo="";
             return (
                         <Card
                                 title="Criar Grupo"                   
@@ -225,19 +275,20 @@ export default class CreateGroupElement extends React.Component {
                                         <span class="closebtn" style={{float: 'right'}} onClick={this.fechaChip}>&times;</span>
                                         </div>
                                         </FormGroup> 
-                                    
+                                    {erroGrupo}
                                     <Button
                                             bsStyle="danger"
                                             pullRight
                                             fill
-                                        
+                                            
                                             onClick={(e) => {
                                                 this.createGroup()
                                             }}
+                                            style={{display: this.state.botao}}
                                         >   
-                                            Criar grupo
+                                            {this.state.nomeBotao}
                                         </Button>
-                                        
+                                        {/*
                                         <Button
                                             bsStyle="danger"
                                             pullRight
@@ -250,7 +301,7 @@ export default class CreateGroupElement extends React.Component {
                                         >
                                             Voltar
                                         </Button>
-                                        
+                                        */}
                                         <div className="clearfix"></div>
                                 </form>
                                 }

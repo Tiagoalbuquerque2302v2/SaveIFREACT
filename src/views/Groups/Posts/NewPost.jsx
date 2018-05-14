@@ -1,15 +1,16 @@
 import React, {Component} from 'react';
 import {
     Grid, Row, Col,
-    FormGroup, ControlLabel, FormControl, Modal
+    FormGroup, ControlLabel, FormControl, Modal, HelpBlock
 } from 'react-bootstrap';
 
 import {Card} from '../../../components/Card/Card.jsx';
 import {FormInputs} from '../../../components/FormInputs/FormInputs.jsx';
 import {UserCard} from '../../../components/UserCard/UserCard.jsx';
 import Button from '../../../elements/CustomButton/CustomButton.jsx';
-
+import servicoLogin from "../../../login/ServicoLogin";
 import avatar from "../../../assets/img/faces/face-3.jpg";
+import Loading from 'react-loading';
 
 export default class NewPost extends React.Component {
     
@@ -17,8 +18,15 @@ export default class NewPost extends React.Component {
     super(props);
 
     this.state = {   
-      post:this.props.post
+      update:0,
+      post:this.props.post,
+      estadoArquivo: null,
+      errorDescricao: "",
+      errorTitulo: "",
+      msgErroDescricao:"",
+      msgErroTitulo:""
     };
+
   }
   
     componentWillReceiveProps(proximoEstado) {
@@ -46,34 +54,73 @@ export default class NewPost extends React.Component {
                             }
                     );
             
-        }    
+        } 
+         
+    setEstadoArquivo(valor){
         
-    
-    setArquivo(valor) {
-        this.setState(
-                (anterior) => {
-            anterior.arquivo = valor;
-            alert("valor");
-            return valor;
+        let valorTrocado = null;
+        if (!valor){
+           valorTrocado = !this.state.estadoArquivo; 
         }
-
-        );
-    }
-    
-    confirmar() {
+        this.setState({
+            estadoArquivo: valorTrocado
+        }); 
+        }
+        
+    setErrorTitulo (estilo, msg){
+            this.setState({
+                errorTitulo: estilo,
+                msgErroTitulo: msg
+            });
+        }
+        
+    setErrorDescricao (estilo, msg){
+            this.setState({
+                errorDescricao: estilo,
+                msgErroDescricao: msg
+            });
+        }
+          
+    confirmar(arquivo) {
         
     if (this.state.post.titulo&&
-                this.state.post.texto) {  
-                    this.props.inserir(this.state.post);
-    }else {
-        alert ("Preencha os campos Título e Descrição");
+                this.state.post.texto) {          
+                    this.setErrorDescricao("", "");
+                    this.setErrorTitulo("", "");
+                    this.props.inserir(this.state.post, arquivo, this.state.estadoArquivo);
+                    this.setEstadoArquivo(true);          
+    }else if (!this.state.post.titulo&&!this.state.post.texto){
+        this.setErrorTitulo("error", "Campo Título não pode ser vazio!");
+        this.setErrorDescricao("error", "Campo Descrição não pode ser vazio!");
+    }else if (!this.state.post.titulo){
+        this.setErrorTitulo("error", "Campo Titulo não pode ser vazio!");
+        this.setErrorDescricao("", "");
+    }else if (!this.state.post.texto){
+        this.setErrorDescricao("error", "Campo Descrição não pode ser vazio!");
+        this.setErrorTitulo("", "");
     }
     }
 
    
 
   render() {
-    return (
+     let erroTitulo=null;
+
+        if (this.state.errorTitulo==="error"){
+            
+            erroTitulo=<HelpBlock>{this.state.msgErroTitulo}</HelpBlock>
+            
+        }else erroTitulo="";
+        
+    let erroDescricao=null;
+
+        if (this.state.errorDescricao==="error"){
+            
+            erroDescricao=<HelpBlock>{this.state.msgErroDescricao}</HelpBlock>
+            
+        }else erroDescricao="";
+  return (
+          
       <Modal
           show={this.props.show}
           onHide={this.props.voltar}
@@ -86,8 +133,8 @@ export default class NewPost extends React.Component {
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <form>
-                  <FormGroup controlId="formControlsText">
+          
+                  <FormGroup controlId="formControlsText" validationState={this.state.errorTitulo}>
                                             <ControlLabel>Título</ControlLabel>
                                             <FormControl
                                                 type="text"                                               
@@ -96,11 +143,9 @@ export default class NewPost extends React.Component {
                                                 onChange={(e) => this.setTitulo(e.target.value)}
                                             />
                                         </FormGroup>
-                                        
-
-                    <Row>
-                      <Col md={12}>
-                        <FormGroup controlId="formControlsTextarea">
+                                        {erroTitulo}
+               
+                        <FormGroup controlId="formControlsTextarea" validationState={this.state.errorDescricao}>
                           <ControlLabel>Descrição</ControlLabel>
                           <FormControl rows="4" componentClass="textarea"
                             bsClass="form-control"
@@ -109,31 +154,23 @@ export default class NewPost extends React.Component {
                             onChange={(e) => this.setTexto(e.target.value)}
                             />
                         </FormGroup>
-                      </Col>
-                    </Row>
-
-                    <FormInputs
-                      onChange={(e) => this.setArquivo(e.target.value)}
-                      ncols={["col-md-6"]}
-                      proprieties={[
-                        {
-                          label: "Selecione um arquivo: ",
-                          type: "file",
-                          bsClass: "form-control",
-                          placeholder: "File",
-                        }
-                      ]}
-                    />
-
-                    
-                    <div className="clearfix"></div>
-                  </form>
+                        {erroDescricao}
+          
           </Modal.Body>
           <Modal.Footer>
-            <Button onClick={this.props.voltar}>Voltar</Button>
-            <Button
-                      onClick={(e) => {
-                        this.confirmar()}}
+            
+            <form method="post" encType="multipart/form-data"  
+                    onSubmit={(event) => {
+                            event.preventDefault();
+                            this.confirmar(event.target);
+}}>    
+                <input name="arquivo" type="file" onClick={() => this.setEstadoArquivo(true)} onChange={() => this.setEstadoArquivo()} style={{float:"left"}}/> 
+                  
+                    <div style={{float:"right", display: this.props.loading}}><Loading type ='spinningBubbles' color='#FF4A55' height={30} width={30}/></div>
+                    
+                    <br/><br/><br/>
+        <Button onClick={this.props.voltar}>Voltar</Button>
+            <Button                    
                       bsStyle="danger"
                       pullRight
                       fill
@@ -141,8 +178,10 @@ export default class NewPost extends React.Component {
                     >
                       Postar
                 </Button>
+                </form>
           </Modal.Footer>
         </Modal>
+        
     );
   }
 }

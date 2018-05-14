@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
         import {
         Grid, Row, Col,
-                FormGroup, ControlLabel, FormControl, Table
+                FormGroup, ControlLabel, FormControl, Table, Alert
         } from 'react-bootstrap';
         import {Card} from '../../../components/Card/Card.jsx';
         import {FormInputs} from '../../../components/FormInputs/FormInputs.jsx';
@@ -26,7 +26,8 @@ import React, {Component} from 'react';
                 topico:{titulo:"teste"},
                 campoTopico: false,   
                 error: "",
-                msgErro:""
+                msgErro:"",
+                alert: false
                 };
                 
                 this.topicService = new TopicService();
@@ -111,6 +112,12 @@ import React, {Component} from 'react';
         }     
         }
 
+        setAlert(valor){
+        this.setState({
+            alert: valor
+        }); 
+        }
+        
         confirmar() {
             
       
@@ -118,6 +125,7 @@ import React, {Component} from 'react';
             
         }else if (this.state.topic.nome) {
                 this.props.inserir(this.state.topic);
+                this.setAlert(true); 
                 this.setConfigNovoTopico();
         } else {
                 this.setError("error", "Campo nome não pode ser vazio!");
@@ -126,16 +134,21 @@ import React, {Component} from 'react';
         
         verTopico(id,topico){  
             
+           
             return (topico.nome === 'Geral')? `MyGroups/${id}/geral`:`MyGroups/${id}/posts/${topico.id}`;               
         }
 
         render() {
+        let aviso=null;
+    
+    if (this.state.alert){
+        aviso=<Alert bsStyle="success">
+        <strong>Concluído!</strong> Topico criado com sucesso.
+        </Alert>
+    }
         
         let erroTopico=null;
-        
-        
-        
-        
+
         console.log(this.state.topico);
         if (this.state.error==="error"){
             
@@ -146,6 +159,7 @@ import React, {Component} from 'react';
         if(this.state.topico.titulo !== "teste")
         return (
                 <Col md={4}>
+                {aviso}
                         <Card
                             title="Tópicos"
                             
@@ -171,7 +185,7 @@ import React, {Component} from 'react';
                                         </FormGroup>
                                         {erroTopico}
                                         </td>
-                                        <td><Button style={{borderStyle: "none", display: this.state.campoNomeTopico}} onClick={(e) => {this.confirmar();}}><img src={done} width="25px" height="20px"/></Button></td>
+                                        <td><Button style={{borderStyle: "none", display: this.state.campoNomeTopico}} onClick={(e) => {this.confirmar();}}><img src={done} width="28px" height="20px"/></Button></td>
                                         </tr>                                 
                                 </Table>
              

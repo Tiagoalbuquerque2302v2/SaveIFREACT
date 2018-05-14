@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Grid, Col, Row } from 'react-bootstrap';
+import { Grid, Col, Row, Modal, Alert} from 'react-bootstrap';
 import {Card} from '../../../components/Card/Card.jsx';
 import PostService from './PostsService';
 import GroupService from '../GroupService';
@@ -7,6 +7,7 @@ import PostList from './PostList';
 import NewPost from './NewPost';
 import TopicCard from '../CreateTopic/TopicCard';
 import Button from '../../../elements/CustomButton/CustomButton.jsx';
+import servicoLogin from "../../../login/ServicoLogin";
 
 class GroupView extends Component {
 
@@ -16,20 +17,19 @@ class GroupView extends Component {
 
         this.state = {
             show: false,
+            loading: "none",
             pagina:"",
             post:{titulo:"teste"},
             grupo:{id:this.props.id},
-            topico:{id:this.props.idt}          
+            topico:{id:this.props.idt},
+            alert: false
         }
-        
-        //alert(this.state.topico.id);
-        //alert(this.state.grupo.id);
+        console.log(this.state.topico.id);
         
         this.postService = new PostService();
         this.groupService = new GroupService();
         (this.state.topico.id)? this.listarPostEspecifico():this.listar();
         this.listarGrupo();
-
     }
 
     setarItem(paginaResultado) {
@@ -42,6 +42,12 @@ class GroupView extends Component {
     abrirNovoPost() { 
         this.setState({
             show: true
+        });
+    }
+    
+    loading(value) { 
+        this.setState({
+            loading: value
         });
     }
 
@@ -60,6 +66,12 @@ class GroupView extends Component {
         );
 
     } 
+    
+    setAlert(valor){
+        this.setState({
+            alert: valor
+        }); 
+        }
     
     listarPostEspecifico() {
         this.paginaAtual=0;
@@ -82,6 +94,12 @@ class GroupView extends Component {
         });
     }
     
+    
+    setAnexoId(resultado) {
+        this.setState({
+            anexo: resultado
+        });
+    }
 
     
     listarGrupo() {
@@ -95,16 +113,56 @@ class GroupView extends Component {
             console.log(erro);
         }
         );
-    }   
+    }  
+    
+    upload(form, idPost) {
+         
+        let formData = new FormData(form);
+        fetch("/api/posts/"+idPost+"/anexo", {
+            method: "POST",
+
+            headers: new Headers({
+                'Authorization': servicoLogin.getAuthorization()
+
+            }),
+            body: formData
+        }).then((resultado) => {
+            
+            if (resultado.ok) {
+                this.setState(
+                (anterior) =>
+        {
+            anterior.update = anterior.update+1; 
+            console.log("Mudou");
+            
+            
+    
+            return anterior;
+        }
+        );            
+            } else {
+                resultado.json().then(
+                        (resultadoErro) => console.log(resultadoErro)
+                )
+            }
+        });
+        
+    }
     
     render() {
         
-        console.log(this.state.topico);
-            //<PostList posts={this.state.pagina}/>
-        
-        return (
-            <div className="content">
+    let aviso=null;
     
+    if (this.state.alert){
+        aviso=<Alert bsStyle="success">
+        <strong>Concluído!</strong> Post realizado com sucesso.
+        </Alert>
+    }
+            //<PostList posts={this.state.pagina}/>     
+        return (
+                
+            <div className="content">
+                {aviso}
                 <h1 style={{fontSize: '30px'}}>{this.state.grupo.nome} - Geral</h1>
                 
                 <Grid fluid>
@@ -147,10 +205,29 @@ class GroupView extends Component {
                     <NewPost 
                     voltar={()=>{this.setState({show:false});}}
                     show={this.state.show}
-                    inserir ={(post)=>{ 
-                                    this.postService.inserirEmTopico(post,this.state.grupo.id, 
+                    loading={this.state.loading}
+                    
+                    upload={(anexo)=>{this.upload(anexo);}}
+                    inserir ={(post, anexo, estadoArquivo)=>{
+                        
+                                    this.loading("");
+                                    
+                                    let topicoId;
+                                    if(this.state.topico.id){
+                                    topicoId=this.state.topico.id;
+                                    }else topicoId=1;
+                                    
+                                    this.postService.inserirEmTopico(post, this.state.grupo.id, topicoId,
                                     (post)=>{
-                                        alert("Post criado com sucesso!");
+                                    
+                                    if(estadoArquivo){
+                                        
+                                        this.upload(anexo, post.id);
+                                        }
+                                        
+                                        this.loading("none");
+                                        
+                                        this.setAlert (true);
                                         this.setState({show: false});                            
                                 },
                                 (erro)=>{
@@ -158,6 +235,7 @@ class GroupView extends Component {
                                 console.log(erro);
                             }
                         );
+                        
                 }}
                 post={this.state.post} 
                     />

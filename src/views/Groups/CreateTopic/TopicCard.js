@@ -17,22 +17,23 @@ export default class TopicCard extends Component {
             topic:{},
             lista: {},
             idGrupoAtual: this.props.idGrupo,
+            
         }
         
         this.topicService = new TopicService();
-        
+
     }
     
     render() {
-        //console.log(this.state.topico);
+        
         return (
-
+                
                     <NewTopic
                         idGrupo = {this.state.idGrupoAtual}
                         inserir ={(topic)=>{ 
                                     this.topicService.inserirEmGrupo(topic,this.state.idGrupoAtual, 
                                     (topico)=>{
-                                        alert("Topico criado com sucesso!");                         
+                                                               
                                 },
                                 (erro)=>{
                                 console.log("Erro!");

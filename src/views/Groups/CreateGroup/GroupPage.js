@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {
 Grid, Row, Col,
-FormGroup, ControlLabel, FormControl, Radio, Checkbox
+FormGroup, ControlLabel, FormControl, Radio, Checkbox, Alert
 } from 'react-bootstrap';
 import {Link} from 'react-router-dom'
 
@@ -32,7 +32,8 @@ constructor (props){
         page2: "",
         page3: "",
         group:{},
-        category: {}
+        category: {},
+        alert: false
     }
     
     this.groupService = new GroupService();
@@ -49,6 +50,12 @@ setLista(categorias) {
        
 }
 
+setAlert(valor){
+        this.setState({
+            alert: valor
+        }); 
+        }
+        
 listaCategorias (){
         this.categoryService.listarNaoPaginado(
                (resultado) => {
@@ -108,9 +115,17 @@ inserirComCategorias(item, idCategoria, sucesso, erro) {
 
 
 render() {
-
+let aviso=null;
+    
+    if (this.state.alert){
+        aviso=<Alert bsStyle="success">
+        <strong>Concluído!</strong> Grupo criado com sucesso.
+        </Alert>
+    }
     return (
         <div className="content">
+
+        {aviso}
             <Grid fluid>
                 <Row>
                     <Col md={8}>
@@ -126,10 +141,11 @@ render() {
                                
                                confirmar={()=>{this.setState({privacy:"none", disabled:true, information: "none", search: "none", invite: "none", page1: "", page2: "", page3: "red", photo: ""});}}
                               
+                               alert={()=>{this.setState({alert:true});}}
                                inserir ={(group, idCategoria)=>{ 
                                     this.inserirComCategorias(group, idCategoria,
                                     (grupo)=>{
-                                        alert("Grupo criado com sucesso!");
+                                        
                                         this.setState({privacy:"none", disabled:true, information: "none", search: "", group: grupo, invite: "", page1: "", page2: "red", page3: "", photo: "none"});            
                                         
                                 },

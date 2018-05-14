@@ -27,7 +27,10 @@ class RotaPosts extends Component {
 
  render() {
     //console.log(this.props.match.params.id);
-    return <GroupView id={this.props.match.params.id}/>;
+    return <GroupView id={this.props.match.params.id}
+                      idt={this.props.match.params.idt}            
+        />;
+        
  }
 
 }
